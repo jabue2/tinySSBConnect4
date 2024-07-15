@@ -355,7 +355,8 @@ function connect4_end_game(gameId) {
 }
 
 function connect4_leave_game(gameId) {
-    //backend(`connect_four_end ${gameId} ${myId}`);
+    document.getElementById("connect4-game-end-button").style.display = `block`;
+    document.getElementById("connect4-game-leave-button").style.display = `none`;
     setScenario("connect4-game");
     persist();
     delete tremola.game_connect4[gameId];
