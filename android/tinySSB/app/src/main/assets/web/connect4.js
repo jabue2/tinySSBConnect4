@@ -156,7 +156,8 @@ function connect4_game_end_event(e) {
         document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
     }
 
-    document.getElementById("connect4-game-end-button").innerHTML = "End!";
+    document.getElementById("connect4-game-end-button").style.display = `none`;
+    showEndButton();
     connect4_load_games_list();
 }
 
@@ -169,6 +170,7 @@ function connect4_open_game_session(gameId) {
 
     document.getElementById("connect4-game-session-title").innerHTML = tremola.game_connect4[gameId].alias;
     document.getElementById("connect4-game-end-button").onclick = () => connect4_end_game(gameId);
+    document.getElementById("connect4-game-leave-button").onclick = () => connect4_leave_game(gameId);
     connect4_set_turn_indicator(gameId);
 
     connect4_populate_game(gameId);
@@ -346,9 +348,20 @@ function connect4_set_turn_indicator(gameId) {
  */
 function connect4_end_game(gameId) {
     document.getElementById("connect4-game-end-button").innerHTML = "Give up";
+    document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
+    document.getElementById("connect4-game-end-button").style.display = `none`;
     backend(`connect_four_end ${gameId} ${myId}`);
-    delete tremola.game_connect4[gameId];
-    setScenario('game');
+    showEndButton();
+}
+
+function connect4_leave_game(gameId) {
+    //backend(`connect_four_end ${gameId} ${myId}`);
+    setScenario("connect4-game");
     persist();
+    delete tremola.game_connect4[gameId];
     connect4_load_games_list();
+}
+
+function showEndButton() {
+    document.getElementById('connect4-game-leave-button').style.display = 'block';
 }

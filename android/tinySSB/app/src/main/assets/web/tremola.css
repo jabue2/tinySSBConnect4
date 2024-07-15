@@ -707,3 +707,9 @@ input:checked + .slider:before {
     width: 5em;
 }
 
+#connect4-game-leave-button {
+    font-size: 1.5em;
+    padding: 0.5em;
+    width: 5em;
+}
+
