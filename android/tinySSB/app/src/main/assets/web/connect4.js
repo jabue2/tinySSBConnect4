@@ -28,42 +28,6 @@ function connect4_fill_players() {
     document.getElementById(myId).disabled = true;
 }
 
-/**
- * Starts new game, creates it and stores it into the store.
- * Gives over to connect4_open_game_session().
- */
-function connect4_new_game_start() {
-    var opponent = {}
-    for (var m in tremola.contacts) {
-        if (document.getElementById(m).checked) {
-            opponent = m;
-        }
-    }
-
-    var players = [myId, opponent];
-    var gameId = recps2nm(players);
-
-    if (tremola.game_connect4 == null) {
-        tremola.game_connect4 = {};
-    }
-
-    if (!(gameId in tremola.game_connect4)) {
-        tremola.game_connect4[gameId] = {
-            alias: fid2display(opponent) + " vs " + fid2display(myId),
-            board: Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))),
-            currentPlayer: opponent,
-            members: players,
-            gameOver: false
-        };
-    }
-
-    document.getElementById("div:connect4-confirm-player").style.display = 'none';
-    connect4_open_game_session(gameId);
-
-    persist();
-    connect4_send_board(gameId);
-}
-
 function connect4_send_invite() {
     var opponent = {}
         for (var m in tremola.contacts) {
@@ -397,7 +361,7 @@ function showInvitePopup(gameId, inviter) {
     document.getElementById('connect4-game-invite-popup').style.display = 'block';
     inviter1 = fid2display(inviter);
 
-    document.getElementById('connect4-invite-message').innerText = `You have been invited by ${inviter1} to join game session ${gameId}`;
+    document.getElementById('connect4-invite-message').innerText = `You have been invited by ${inviter1} to join game session ${gameId}.`;
     // Store gameId for later use
     document.getElementById('connect4-game-invite-popup').dataset.gameId = gameId;
     document.getElementById('connect4-game-invite-popup').dataset.inviter = inviter;
@@ -417,6 +381,7 @@ function acceptInvite() {
 
     if (tremola.game_connect4 == null) {
         tremola.game_connect4 = {};
+        setScenario('chats');
     }
 
     if (!(gameId in tremola.game_connect4)) {
@@ -429,7 +394,7 @@ function acceptInvite() {
         };
     }
 
-    document.getElementById("connect4-confirm-player").style.display = 'none';
+    document.getElementById("div:connect4-confirm-player").style.display = 'none';
     connect4_open_game_session(gameId);
 
     persist();
