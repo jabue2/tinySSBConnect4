@@ -64,6 +64,21 @@ function connect4_new_game_start() {
     connect4_send_board(gameId);
 }
 
+function connect4_send_invite() {
+    var opponent = {}
+        for (var m in tremola.contacts) {
+            if (document.getElementById(m).checked) {
+                opponent = m;
+            }
+        }
+    var players = [myId, opponent];
+    var gameId = recps2nm(players);
+    document.getElementById("div:connect4-confirm-player").style.display = 'none';
+    setScenario('connect4-game');
+    persist();
+    backend(`connect_four_invite ${gameId} ${myId} ${opponent}`);
+}
+
 /**
  * Clear all ongoing games within lst:connect4-games and builds the game button
  * for each ongoing game.
@@ -363,6 +378,84 @@ function connect4_leave_game(gameId) {
     connect4_load_games_list();
 }
 
+function connect4_recv_invite(e) {
+    const gameId = e.public[1];
+    const inviter = e.public[2];
+    const invited = e.public[3];
+
+    if (myId == invited) {
+        showInvitePopup(gameId, inviter);
+    }
+
+}
+
 function showEndButton() {
     document.getElementById('connect4-game-leave-button').style.display = 'block';
+}
+
+function showInvitePopup(gameId, inviter) {
+    document.getElementById('connect4-game-invite-popup').style.display = 'block';
+    inviter1 = fid2display(inviter);
+
+    document.getElementById('connect4-invite-message').innerText = `You have been invited by ${inviter1} to join game session ${gameId}`;
+    // Store gameId for later use
+    document.getElementById('connect4-game-invite-popup').dataset.gameId = gameId;
+    document.getElementById('connect4-game-invite-popup').dataset.inviter = inviter;
+}
+
+
+function hideInvitePopup() {
+    document.getElementById('connect4-game-invite-popup').style.display = 'none';
+}
+
+function acceptInvite() {
+    gameId = document.getElementById('connect4-game-invite-popup').dataset.gameId;
+    inviter = document.getElementById('connect4-game-invite-popup').dataset.inviter;
+    hideInvitePopup();
+
+    var players = [myId, inviter];
+
+    if (tremola.game_connect4 == null) {
+        tremola.game_connect4 = {};
+    }
+
+    if (!(gameId in tremola.game_connect4)) {
+        tremola.game_connect4[gameId] = {
+            alias: fid2display(inviter) + " vs " + fid2display(myId),
+            board: Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))),
+            currentPlayer: inviter,
+            members: players,
+            gameOver: false
+        };
+    }
+
+    document.getElementById("connect4-confirm-player").style.display = 'none';
+    connect4_open_game_session(gameId);
+
+    persist();
+    connect4_send_board(gameId);
+}
+
+function declineInvite() {
+    gameId = document.getElementById('connect4-game-invite-popup').dataset.gameId;
+    inviter = document.getElementById('connect4-game-invite-popup').dataset.inviter;
+    hideInvitePopup();
+    persist();
+    backend(`connect_four_decline_invite ${gameId} ${inviter} ${myId}`)
+}
+
+function hideDeclinePopup() {
+    document.getElementById("connect4-game-decline-invite-popup").style.display = 'none';
+}
+
+function connect4_invite_declined(e) {
+    const gameId = e.public[1];
+    const inviter = e.public[2];
+    const invited = e.public[3];
+
+    const invi = fid2display(invited);
+    if(myId == inviter) {
+        document.getElementById("connect4-game-decline-invite-popup").style.display = 'block';
+        document.getElementById('connect4-decline-invite-message').innerText = `Your invitation to ${invi} has been declined.`;
+    }
 }

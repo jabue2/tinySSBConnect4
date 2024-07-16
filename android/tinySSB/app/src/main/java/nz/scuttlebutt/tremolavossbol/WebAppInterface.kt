@@ -19,7 +19,9 @@ import org.json.JSONObject
 import nz.scuttlebutt.tremolavossbol.utils.Bipf
 import nz.scuttlebutt.tremolavossbol.utils.Bipf.Companion.BIPF_LIST
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME
+import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_DECLINE_INVITE
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_END
+import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_INVITE
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_IAM
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_TEXTANDVOICE
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_KANBAN
@@ -251,6 +253,12 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
             "connect_four_end" -> {
                 connect_four_end(args[1], args[2]);
             }
+            "connect_four_invite" -> {
+                connect_four_invite(args[1], args[2], args[3]);
+            }
+            "connect_four_decline_invite" -> {
+                connect_four_decline_invite(args[1],args[2], args[3]);
+            }
             else -> {
                 Log.d("onFrontendRequest", "unknown")
             }
@@ -366,6 +374,36 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
 
         if (body != null) {
             Log.d("connect_four", "published bytes: " + Bipf.decode(body))
+            act.tinyNode.publish_public_content(body)
+        }
+    }
+
+    fun connect_four_invite(gameId: String, inviter: String, invitee: String) {
+        val lst = Bipf.mkList()
+        Bipf.list_append(lst, TINYSSB_APP_GAME_INVITE)
+        Bipf.list_append(lst, Bipf.mkString(gameId))
+        Bipf.list_append(lst, Bipf.mkString(inviter))
+        Bipf.list_append(lst, Bipf.mkString(invitee))
+
+        val body = Bipf.encode(lst)
+
+        if (body != null) {
+            Log.d("connect_four_invite", "published bytes: " + Bipf.decode(body))
+            act.tinyNode.publish_public_content(body)
+        }
+    }
+
+    fun connect_four_decline_invite(gameId: String, inviter: String, invitee: String) {
+        val lst = Bipf.mkList()
+        Bipf.list_append(lst, TINYSSB_APP_GAME_DECLINE_INVITE)
+        Bipf.list_append(lst, Bipf.mkString(gameId))
+        Bipf.list_append(lst, Bipf.mkString(inviter))
+        Bipf.list_append(lst, Bipf.mkString(invitee))
+
+        val body = Bipf.encode(lst)
+
+        if (body != null) {
+            Log.d("connect_four_decline_invite", "published bytes: " + Bipf.decode(body))
             act.tinyNode.publish_public_content(body)
         }
     }

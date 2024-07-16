@@ -1017,6 +1017,12 @@ function b2f_new_in_order_event(e) {
         case "GEE":
             connect4_game_end_event(e);
             break
+        case "GIN":
+            connect4_recv_invite(e);
+            break
+        case "GDI":
+            connect4_invite_declined(e);
+            break
         default:
             return
     }
