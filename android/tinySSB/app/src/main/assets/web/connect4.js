@@ -35,12 +35,11 @@ function connect4_send_invite() {
                 opponent = m;
             }
         }
-    var players = [myId, opponent];
-    var gameId = recps2nm(players);
+    opponentShort = opponent.substring(0,7);
     document.getElementById("div:connect4-confirm-player").style.display = 'none';
     setScenario('connect4-game');
     persist();
-    backend(`connect_four_invite ${gameId} ${myId} ${opponent}`);
+    backend(`connect_four_invite ${myShortId} ${opponentShort}`);
 }
 
 /**
@@ -80,6 +79,10 @@ function connect4_game_new_event(e) {
     const playerToMove = e.public[2];
     const members = e.public[3].split(',');
     const boardString = e.public[4];
+    console.log(gameId);
+    console.log(playerToMove);
+    console.log(members);
+    console.log(boardString);
 
     if (gameId in tremola.game_connect4) {
         delete tremola.game_connect4[gameId];
@@ -101,13 +104,13 @@ function connect4_game_new_event(e) {
       }
     }
 
-    const opponent = playerToMove == myId ? idlePlayer : playerToMove;
+    const opponent = playerToMove == myShortId ? idlePlayer : playerToMove;
 
     tremola.game_connect4[gameId] = {
         board: board,
         members: members,
         currentPlayer: playerToMove,
-        alias: fid2display(opponent) + " vs " + fid2display(myId),
+        alias: fid2display(shortToFidMap[opponent]) + " vs " + fid2display(myId),
         gameOver: false
     };
     persist();
@@ -129,7 +132,7 @@ function connect4_game_end_event(e) {
     tremola.game_connect4[gameId].gameOver = true;
     persist();
 
-    if (loser != myId) {
+    if (loser != myShortId) {
         document.getElementById("connect4-game-turn-indicator").innerHTML = "You WON!";
     } else {
         document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
@@ -164,7 +167,7 @@ function connect4_populate_game(gameId) {
     document.getElementById('connect4-game-board').innerHTML = '';
 
     const { board, members } = tremola.game_connect4[gameId];
-    const opponent = members.find(member => member != myId);
+    const opponent = members.find(member => member != myShortId);
 
     for (let y = 0; y < CONNECT4_GAME_ROWS; y++) {
         for (let x = 0; x < CONNECT4_GAME_COLUMNS; x++) {
@@ -173,9 +176,9 @@ function connect4_populate_game(gameId) {
             tile.onclick = () => connect4_add_stone(gameId, x);
 
             const { owner } = board[x][y];
-            if (owner == myId) {
+            if (owner == myShortId) {
                 tile.style.backgroundColor = "yellow";
-            } else if (owner != myId && owner != null) {
+            } else if (owner != myShortId && owner != null) {
                 tile.style.backgroundColor = "red";
             }
 
@@ -196,19 +199,19 @@ function connect4_populate_game(gameId) {
 function connect4_add_stone(gameId, column) {
     const { board, currentPlayer, members, gameOver } = tremola.game_connect4[gameId];
 
-    if (currentPlayer != myId || gameOver) {
+    if (currentPlayer != myShortId || gameOver) {
         return;
     }
 
     const freeSlots = board[column].filter(t => t.owner == null).length;
     if (freeSlots > 0) {
         const boardElement = board[column][freeSlots - 1];
-        boardElement.owner = myId;
+        boardElement.owner = myShortId;
         boardElement.tile.style.backgroundColor = "yellow";
 
         const gameover = connect4_check_gameover(gameId);
         if (gameover) {
-            const loser = members.find(member => member != myId);
+            const loser = members.find(member => member != myShortId);
             tremola.game_connect4[gameId].gameOver = true;
             persist();
             backend(`connect_four_end ${gameId} ${loser}`);
@@ -272,12 +275,12 @@ function connect4_check_line(a, b, c, d) {
  */
 function connect4_end_turn(gameId) {
     const { currentPlayer } = tremola.game_connect4[gameId];
-    const opponent = tremola.game_connect4[gameId].members.find(member => member != myId);
+    const opponent = tremola.game_connect4[gameId].members.find(member => member != myShortId);
 
-    if (currentPlayer == myId) {
+    if (currentPlayer == myShortId) {
         tremola.game_connect4[gameId].currentPlayer = opponent;
     } else {
-        tremola.game_connect4[gameId].currentPlayer = myId;
+        tremola.game_connect4[gameId].currentPlayer = myShortId;
     }
     persist();
     connect4_set_turn_indicator(gameId);
@@ -315,7 +318,7 @@ function connect4_send_board(gameId) {
  * Sets UI turn indicator accoring to currentPlayer.
  */
 function connect4_set_turn_indicator(gameId) {
-    if (tremola.game_connect4[gameId].currentPlayer == myId) {
+    if (tremola.game_connect4[gameId].currentPlayer == myShortId) {
         document.getElementById("connect4-game-turn-indicator").innerHTML = "Your turn!";
     } else {
         document.getElementById("connect4-game-turn-indicator").innerHTML = "Wait for your opponent.";
@@ -329,7 +332,7 @@ function connect4_end_game(gameId) {
     document.getElementById("connect4-game-end-button").innerHTML = "Give up";
     document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
     document.getElementById("connect4-game-end-button").style.display = `none`;
-    backend(`connect_four_end ${gameId} ${myId}`);
+    backend(`connect_four_end ${gameId} ${myShortId}`);
     showEndButton();
 }
 
@@ -343,12 +346,11 @@ function connect4_leave_game(gameId) {
 }
 
 function connect4_recv_invite(e) {
-    const gameId = e.public[1];
-    const inviter = e.public[2];
-    const invited = e.public[3];
+    const inviterShort = e.public[1];
+    const invitedShort = e.public[2];
 
-    if (myId == invited) {
-        showInvitePopup(gameId, inviter);
+    if (myShortId == invitedShort) {
+        showInvitePopup(inviterShort);
     }
 
 }
@@ -357,38 +359,34 @@ function showEndButton() {
     document.getElementById('connect4-game-leave-button').style.display = 'block';
 }
 
-function showInvitePopup(gameId, inviter) {
+function showInvitePopup(inviterShort) {
     document.getElementById('connect4-game-invite-popup').style.display = 'block';
-    inviter1 = fid2display(inviter);
+    inviterLong = shortToFidMap[inviterShort];
+    inviterAlias = fid2display(inviterLong);
 
-    document.getElementById('connect4-invite-message').innerText = `You have been invited by ${inviter1} to join game session ${gameId}.`;
-    // Store gameId for later use
-    document.getElementById('connect4-game-invite-popup').dataset.gameId = gameId;
-    document.getElementById('connect4-game-invite-popup').dataset.inviter = inviter;
+    document.getElementById('connect4-invite-message').innerText = `You have been invited by ${inviterAlias} to play a game of connect four.`;
+    document.getElementById('connect4-game-invite-popup').dataset.inviterShort = inviterShort;
 }
-
 
 function hideInvitePopup() {
     document.getElementById('connect4-game-invite-popup').style.display = 'none';
 }
 
 function acceptInvite() {
-    gameId = document.getElementById('connect4-game-invite-popup').dataset.gameId;
-    inviter = document.getElementById('connect4-game-invite-popup').dataset.inviter;
+    inviterShort = document.getElementById('connect4-game-invite-popup').dataset.inviterShort;
+    players = [myShortId, inviterShort];
+    gameId = recps2nm(players);
     hideInvitePopup();
-
-    var players = [myId, inviter];
 
     if (tremola.game_connect4 == null) {
         tremola.game_connect4 = {};
-        setScenario('chats');
     }
 
     if (!(gameId in tremola.game_connect4)) {
         tremola.game_connect4[gameId] = {
-            alias: fid2display(inviter) + " vs " + fid2display(myId),
+            alias: fid2display(shortToFidMap[inviterShort]) + " vs " + fid2display(myId),
             board: Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))),
-            currentPlayer: inviter,
+            currentPlayer: inviterShort,
             members: players,
             gameOver: false
         };
@@ -402,11 +400,10 @@ function acceptInvite() {
 }
 
 function declineInvite() {
-    gameId = document.getElementById('connect4-game-invite-popup').dataset.gameId;
-    inviter = document.getElementById('connect4-game-invite-popup').dataset.inviter;
+    inviterShort = document.getElementById('connect4-game-invite-popup').dataset.inviterShort;
     hideInvitePopup();
     persist();
-    backend(`connect_four_decline_invite ${gameId} ${inviter} ${myId}`)
+    backend(`connect_four_decline_invite ${inviterShort} ${myShortId}`)
 }
 
 function hideDeclinePopup() {
@@ -414,13 +411,12 @@ function hideDeclinePopup() {
 }
 
 function connect4_invite_declined(e) {
-    const gameId = e.public[1];
-    const inviter = e.public[2];
-    const invited = e.public[3];
+    const inviterShort = e.public[1];
+    const invitedShort = e.public[2];
 
-    const invi = fid2display(invited);
-    if(myId == inviter) {
+    const invitedAlias = fid2display(shortToFidMap[invitedShort]);
+    if(myShortId == inviterShort) {
         document.getElementById("connect4-game-decline-invite-popup").style.display = 'block';
-        document.getElementById('connect4-decline-invite-message').innerText = `Your invitation to ${invi} has been declined.`;
+        document.getElementById('connect4-decline-invite-message').innerText = `Your invitation to ${invitedAlias} has been declined.`;
     }
 }

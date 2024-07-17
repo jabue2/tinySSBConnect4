@@ -254,10 +254,10 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
                 connect_four_end(args[1], args[2]);
             }
             "connect_four_invite" -> {
-                connect_four_invite(args[1], args[2], args[3]);
+                connect_four_invite(args[1], args[2]);
             }
             "connect_four_decline_invite" -> {
-                connect_four_decline_invite(args[1],args[2], args[3]);
+                connect_four_decline_invite(args[1],args[2]);
             }
             else -> {
                 Log.d("onFrontendRequest", "unknown")
@@ -378,10 +378,9 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
         }
     }
 
-    fun connect_four_invite(gameId: String, inviter: String, invitee: String) {
+    fun connect_four_invite(inviter: String, invitee: String) {
         val lst = Bipf.mkList()
         Bipf.list_append(lst, TINYSSB_APP_GAME_INVITE)
-        Bipf.list_append(lst, Bipf.mkString(gameId))
         Bipf.list_append(lst, Bipf.mkString(inviter))
         Bipf.list_append(lst, Bipf.mkString(invitee))
 
@@ -393,10 +392,9 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
         }
     }
 
-    fun connect_four_decline_invite(gameId: String, inviter: String, invitee: String) {
+    fun connect_four_decline_invite(inviter: String, invitee: String) {
         val lst = Bipf.mkList()
         Bipf.list_append(lst, TINYSSB_APP_GAME_DECLINE_INVITE)
-        Bipf.list_append(lst, Bipf.mkString(gameId))
         Bipf.list_append(lst, Bipf.mkString(inviter))
         Bipf.list_append(lst, Bipf.mkString(invitee))
 

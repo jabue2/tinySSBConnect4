@@ -6,6 +6,7 @@ var tremola;
 var curr_chat;
 var qr;
 var myId;
+var myShortId;
 var localPeers = {}; // feedID ~ [isOnline, isConnected] - TF, TT, FT - FF means to remove this entry
 var must_redraw = false;
 var edit_target = '';
@@ -16,6 +17,7 @@ var colors = ["#d9ceb2", "#99b2b7", "#e6cba5", "#ede3b4", "#8b9e9b", "#bd7578", 
 var curr_img_candidate = null;
 var pubs = []
 var wants = {}
+var shortToFidMap = {};
 
 var restream = false // whether the backend is currently restreaming all posts
 
@@ -745,6 +747,15 @@ function fid2display(fid) {
     return a;
 }
 
+function fid2displayShort(fidShort) {
+    var a = '';
+    if (fidShort in tremola.contacts)
+        a = tremola.contacts[fidShort].alias;
+    if (a == '')
+        a = fid.substring(0, 9);
+    return a;
+}
+
 // --- Interface to Kotlin side and local (browser) storage
 
 function backend(cmdStr) { // send this to Kotlin (or simulate in case of browser-only testing)
@@ -1174,6 +1185,7 @@ function b2f_new_contact(fid) {
         "color": colors[Math.floor(colors.length * Math.random())],
         "iam": "", "forgotten": false
     };
+    addToMap(fid);
     persist()
     load_contact_list();
 }
@@ -1204,6 +1216,7 @@ function b2f_new_image_blob(ref) {
 
 function b2f_initialize(id) {
     myId = id
+    myShortId = myId.substring(0,7);
     if (window.localStorage.tremola) {
         tremola = JSON.parse(window.localStorage.getItem('tremola'));
 
@@ -1229,6 +1242,11 @@ function b2f_initialize(id) {
     closeOverlay();
     setScenario('chats');
     // load_chat("ALL");
+}
+
+function addToMap(fid) {
+    const fidShort = fid.substring(0, 7);  // Extract the shortID from the longID
+    shortToFidMap[fidShort] = fid;         // Map shortID to longID
 }
 
 // --- eof
