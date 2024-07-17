@@ -362,13 +362,13 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
 
     }
 
-    fun connect_four(gameId: String, currentPlayer: String, members: String, board: String) {
+    fun connect_four(gameId: String, currentPlayer: String, members: String, stonePos: String) {
         val lst = Bipf.mkList()
         Bipf.list_append(lst, TINYSSB_APP_GAME)
         Bipf.list_append(lst, Bipf.mkString(gameId))
         Bipf.list_append(lst, Bipf.mkString(currentPlayer))
         Bipf.list_append(lst, Bipf.mkString(members))
-        Bipf.list_append(lst, Bipf.mkString(board))
+        Bipf.list_append(lst, Bipf.mkString(stonePos))
 
         val body = Bipf.encode(lst)
 

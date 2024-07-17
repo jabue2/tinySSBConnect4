@@ -78,30 +78,21 @@ function connect4_game_new_event(e) {
     const gameId = e.public[1];
     const playerToMove = e.public[2];
     const members = e.public[3].split(',');
-    const boardString = e.public[4];
-    console.log(gameId);
-    console.log(playerToMove);
-    console.log(members);
-    console.log(boardString);
-
-    if (gameId in tremola.game_connect4) {
-        delete tremola.game_connect4[gameId];
-    }
+    const stonePos = parseInt(e.public[4], 10);
 
     let idlePlayer = members.find(member => member != playerToMove);
-    const board = Array.from(new Array(7), () => Array.from(new Array(6), () => ({})));
 
-    let i = 0;
-    for (let x = 0; x < 7; x++) {
-    	for (let y = 0; y < 6; y++) {
-      	if (boardString[i] == '1') {
-        	board[x][y].owner = playerToMove;
-        } else if (boardString[i] == '2') {
-        	board[x][y].owner = idlePlayer;
-        }
+    let board;
+    if (tremola.game_connect4[gameId] && tremola.game_connect4[gameId].board) {
+        board = tremola.game_connect4[gameId].board; // Use the existing board
+    } else {
+        board = Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))); // Initialize a new board
+    }
 
-        i++;
-      }
+    if(stonePos != -1) {
+        const x = stonePos % 7;
+        const y = Math.floor(stonePos / 7);
+        tremola.game_connect4[gameId].board[x][y].owner = idlePlayer;
     }
 
     const opponent = playerToMove == myShortId ? idlePlayer : playerToMove;
@@ -206,6 +197,7 @@ function connect4_add_stone(gameId, column) {
     const freeSlots = board[column].filter(t => t.owner == null).length;
     if (freeSlots > 0) {
         const boardElement = board[column][freeSlots - 1];
+        const stonePos = ((freeSlots - 1) * 7) + column
         boardElement.owner = myShortId;
         boardElement.tile.style.backgroundColor = "yellow";
 
@@ -218,7 +210,7 @@ function connect4_add_stone(gameId, column) {
             return;
         }
 
-        connect4_end_turn(gameId);
+        connect4_end_turn(gameId, stonePos);
     }
 }
 
@@ -273,7 +265,7 @@ function connect4_check_line(a, b, c, d) {
  * the UI accordingly with the turn indicator.
  * Sends board information after turn is over via backend.
  */
-function connect4_end_turn(gameId) {
+function connect4_end_turn(gameId, stonePos) {
     const { currentPlayer } = tremola.game_connect4[gameId];
     const opponent = tremola.game_connect4[gameId].members.find(member => member != myShortId);
 
@@ -284,34 +276,19 @@ function connect4_end_turn(gameId) {
     }
     persist();
     connect4_set_turn_indicator(gameId);
-    connect4_send_board(gameId);
+    connect4_send_board(gameId, stonePos);
 }
 
 /**
  * Converts board state to a string encoding and sends
  * game information via backend.
  */
-function connect4_send_board(gameId) {
+function connect4_send_board(gameId, stonePos) {
     const { board, currentPlayer: playerToMove } = tremola.game_connect4[gameId];
-    let boardString = ""
-
-    board.forEach((column, ci) => {
-      column.forEach((_, ri) => {
-        if (board[ci][ri].owner != null) {
-          if (board[ci][ri].owner == playerToMove) {
-            boardString += "1"
-          } else {
-            boardString += "2"
-          }
-        } else {
-          boardString += "0"
-        }
-      })
-    })
 
     const { members } = tremola.game_connect4[gameId];
 
-    backend(`connect_four ${gameId} ${playerToMove} ${members.join(',')} ${boardString}`);
+    backend(`connect_four ${gameId} ${playerToMove} ${members.join(',')} ${stonePos}`);
 }
 
 /**
@@ -396,7 +373,7 @@ function acceptInvite() {
     connect4_open_game_session(gameId);
 
     persist();
-    connect4_send_board(gameId);
+    connect4_send_board(gameId, -1);
 }
 
 function declineInvite() {
