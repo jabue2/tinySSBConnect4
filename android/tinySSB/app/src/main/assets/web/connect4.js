@@ -147,7 +147,7 @@ function connect4_game_end_event(e) {
     }
 
     document.getElementById("connect4-game-end-button").style.display = `none`;
-    showEndButton();
+    setTimeout(showEndButton, 4000);
     connect4_load_games_list();
 }
 
@@ -326,8 +326,8 @@ function connect4_end_game(gameId) {
     document.getElementById("connect4-game-end-button").innerHTML = "Give up";
     document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
     document.getElementById("connect4-game-end-button").style.display = `none`;
-    backend(`connect_four_end ${gameId} ${myShortId}`);
-    showEndButton();
+    backend(`connect_four_end ${gameId} ${myShortId} ${-1}`);
+    setTimeout(showEndButton, 4000);
 }
 
 function connect4_leave_game(gameId) {

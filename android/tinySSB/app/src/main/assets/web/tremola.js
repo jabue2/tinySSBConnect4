@@ -1237,6 +1237,7 @@ function b2f_initialize(id) {
         setSetting(nm, tremola.settings[nm])
     load_chat_list()
     load_contact_list()
+    loadShortIds();
     load_board_list()
 
     closeOverlay();
@@ -1247,6 +1248,11 @@ function b2f_initialize(id) {
 function addToMap(fid) {
     const fidShort = fid.substring(0, 7);  // Extract the shortID from the longID
     shortToFidMap[fidShort] = fid;         // Map shortID to longID
+}
+
+function loadShortIds() {
+    for (var id in tremola.contacts)
+        addToMap(id);
 }
 
 // --- eof
