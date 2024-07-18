@@ -124,7 +124,17 @@ function connect4_game_end_event(e) {
     if(stonePos != -1) {
         const x = stonePos % 7;
         const y = Math.floor(stonePos / 7);
-        tremola.game_connect4[gameId].board[x][y].owner = idlePlayer;
+        if (loser == myShortId) {
+            if(gameId.substring(0,7) == myShortId) {
+                tremola.game_connect4[gameId].board[x][y].owner = gameId.substring(7, 14);
+            } else {
+                tremola.game_connect4[gameId].board[x][y].owner = gameId.substring(0, 7);
+            }
+        } else {
+            tremola.game_connect4[gameId].board[x][y].owner = myShortId;
+        }
+        connect4_populate_game(gameId);
+        connect4_load_games_list();
     }
 
     tremola.game_connect4[gameId].gameOver = true;

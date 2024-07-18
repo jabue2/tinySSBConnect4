@@ -35,7 +35,7 @@ class Constants{
         val TINYSSB_APP_TEXT         = Bipf.mkString("TXT") // str int xref
         val TINYSSB_APP_IAM          = Bipf.mkString("IAM") // str
         var TINYSSB_APP_GAME         = Bipf.mkString("GME") // str str str str
-        var TINYSSB_APP_GAME_END     = Bipf.mkString("GEE") // str str
+        var TINYSSB_APP_GAME_END     = Bipf.mkString("GEE") // str str str
         var TINYSSB_APP_GAME_INVITE  = Bipf.mkString("GIN") // str str
         var TINYSSB_APP_GAME_DECLINE_INVITE  = Bipf.mkString("GDI") // str str
 
