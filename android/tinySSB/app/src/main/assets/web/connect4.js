@@ -119,6 +119,13 @@ function connect4_game_new_event(e) {
 function connect4_game_end_event(e) {
     const gameId = e.public[1];
     const loser = e.public[2];
+    const stonePos = e.public[3];
+
+    if(stonePos != -1) {
+        const x = stonePos % 7;
+        const y = Math.floor(stonePos / 7);
+        tremola.game_connect4[gameId].board[x][y].owner = idlePlayer;
+    }
 
     tremola.game_connect4[gameId].gameOver = true;
     persist();
@@ -206,7 +213,7 @@ function connect4_add_stone(gameId, column) {
             const loser = members.find(member => member != myShortId);
             tremola.game_connect4[gameId].gameOver = true;
             persist();
-            backend(`connect_four_end ${gameId} ${loser}`);
+            backend(`connect_four_end ${gameId} ${loser} ${stonePos}`);
             return;
         }
 
@@ -292,7 +299,7 @@ function connect4_send_board(gameId, stonePos) {
 }
 
 /**
- * Sets UI turn indicator accoring to currentPlayer.
+ * Sets UI turn indicator according to currentPlayer.
  */
 function connect4_set_turn_indicator(gameId) {
     if (tremola.game_connect4[gameId].currentPlayer == myShortId) {

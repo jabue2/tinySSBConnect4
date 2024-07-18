@@ -1,5 +1,6 @@
 package nz.scuttlebutt.tremolavossbol
 
+
 import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -13,9 +14,6 @@ import android.webkit.WebView
 import android.widget.Toast
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.google.zxing.integration.android.IntentIntegrator
-import org.json.JSONObject
-
-
 import nz.scuttlebutt.tremolavossbol.utils.Bipf
 import nz.scuttlebutt.tremolavossbol.utils.Bipf.Companion.BIPF_LIST
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME
@@ -23,11 +21,12 @@ import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_END
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_GAME_INVITE
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_IAM
-import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_TEXTANDVOICE
 import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_KANBAN
+import nz.scuttlebutt.tremolavossbol.utils.Constants.Companion.TINYSSB_APP_TEXTANDVOICE
 import nz.scuttlebutt.tremolavossbol.utils.HelperFunctions.Companion.toBase64
 import nz.scuttlebutt.tremolavossbol.utils.HelperFunctions.Companion.toHex
 import org.json.JSONArray
+import org.json.JSONObject
 
 
 // pt 3 in https://betterprogramming.pub/5-android-webview-secrets-you-probably-didnt-know-b23f8a8b5a0c
@@ -251,7 +250,7 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
                 connect_four(args[1], args[2], args[3], args[4]);
             }
             "connect_four_end" -> {
-                connect_four_end(args[1], args[2]);
+                connect_four_end(args[1], args[2], args[3]);
             }
             "connect_four_invite" -> {
                 connect_four_invite(args[1], args[2]);
@@ -406,11 +405,12 @@ class WebAppInterface(val act: MainActivity, val webView: WebView) {
         }
     }
 
-    fun connect_four_end(gameId: String, loser: String) {
+    fun connect_four_end(gameId: String, loser: String, stonePos: String) {
         val lst = Bipf.mkList()
         Bipf.list_append(lst, TINYSSB_APP_GAME_END)
         Bipf.list_append(lst, Bipf.mkString(gameId))
         Bipf.list_append(lst, Bipf.mkString(loser))
+        Bipf.list_append(lst, Bipf. mkString(stonePos))
 
         val body = Bipf.encode(lst)
 
