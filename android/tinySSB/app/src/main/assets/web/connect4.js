@@ -65,7 +65,8 @@ function connect4_load_games_list() {
 
 /**
  * Create game button to resume ongoing game.
- *
+ *@param game an Array that contains the GameID and a list with information about the game, in the format:
+ * [ id, { "alias": "player1 vs player2", "moves": {}, members: [] } ] }
  */
 function connect4_build_game_item(game) { // [ id, { "alias": "player1 vs player2", "moves": {}, members: [] } ] }
     var row, item = document.createElement('div'), bg;
@@ -292,6 +293,7 @@ function connect4_add_stone(gameId, column) {
 /**
  * Checks if game is over by checking if stones align so
  * that 4 stones are adjacent to each other.
+ * @param gameId Id of the game that is responded
  */
 function connect4_check_gameover(gameId) {
     const { board: b } = tremola.game_connect4[gameId];
@@ -326,6 +328,10 @@ function connect4_check_gameover(gameId) {
 /**
  * Helper function for connect4_check_gameover() to check if 4 stones
  * are adjacent.
+ * @param a first stone to be checked
+ * @param b second stone to be checked
+ * @param c third stone to be checked
+ * @param d fourth stone to be checked
  */
 function connect4_check_line(a, b, c, d) {
     // Check first cell non-zero and all cells match
@@ -339,6 +345,8 @@ function connect4_check_line(a, b, c, d) {
  * Sets the new currentPlayer to the store and updates
  * the UI accordingly with the turn indicator.
  * Sends board information after turn is over via backend.
+ * @param gameId ID of the responsable game
+ * @param stonePos position of the stone on the board
  */
 function connect4_end_turn(gameId, stonePos) {
     const { currentPlayer } = tremola.game_connect4[gameId];
@@ -355,8 +363,9 @@ function connect4_end_turn(gameId, stonePos) {
 }
 
 /**
- * Converts board state to a string encoding and sends
- * game information via backend.
+ * Sends the position of the new positioned Stone on the board via backend
+ * @param gameId ID of the responsable game
+ * @param stonePos Position of the stone that was placed
  */
 function connect4_send_board(gameId, stonePos) {
     const { board, currentPlayer: playerToMove } = tremola.game_connect4[gameId];
@@ -368,6 +377,7 @@ function connect4_send_board(gameId, stonePos) {
 
 /**
  * Sets UI turn indicator according to currentPlayer.
+ * @param gameId ID of the responsable game
  */
 function connect4_set_turn_indicator(gameId) {
     if (tremola.game_connect4[gameId].currentPlayer == myShortId) {
@@ -378,16 +388,22 @@ function connect4_set_turn_indicator(gameId) {
 }
 
 /**
- * Ends game, either by Giving up or if game is over.
+ * Ends game, either by Giving up or if game is over. After 4 seconds it shows a button to leave the session
+ * @param gameId ID of the responsable game
  */
 function connect4_end_game(gameId) {
     document.getElementById("connect4-game-end-button").innerHTML = "Give up";
     document.getElementById("connect4-game-turn-indicator").innerHTML = "You LOST!";
     document.getElementById("connect4-game-end-button").style.display = `none`;
     backend(`connect_four_end ${gameId} ${myShortId} ${-1}`);
+    //Adds a delay for the button to be showed to ensure proper data transmission without errors
     setTimeout(showEndButton, 4000);
 }
 
+/**
+ * Leaves the game after it is finished, via button click, and also deletes it from the database
+ * @param gameId ID of the Game that is leaved
+ */
 function connect4_leave_game(gameId) {
     document.getElementById("connect4-game-end-button").style.display = `block`;
     document.getElementById("connect4-game-leave-button").style.display = `none`;
@@ -397,6 +413,10 @@ function connect4_leave_game(gameId) {
     connect4_load_games_list();
 }
 
+/**
+ * Receives an invitation message and if this invite was meant for the player then it shows the invite PupUp, else  it is ignored
+ * @param e invitation event
+ */
 function connect4_recv_invite(e) {
     const inviterShort = e.public[1];
     const invitedShort = e.public[2];
@@ -407,10 +427,18 @@ function connect4_recv_invite(e) {
 
 }
 
+/**
+ * Shows the end Button when a game is Finished
+ */
 function showEndButton() {
     document.getElementById('connect4-game-leave-button').style.display = 'block';
 }
 
+/**
+ * Shows an invitation notification in form of a popUp, whenever a user gets invited to a game by another user.
+ * This Popup contains of a decline and accept button
+ * @param inviterShort The shorted ID of the inviter
+ */
 function showInvitePopup(inviterShort) {
     document.getElementById('connect4-game-invite-popup').style.display = 'block';
     inviterLong = shortToFidMap[inviterShort];
@@ -420,9 +448,16 @@ function showInvitePopup(inviterShort) {
     document.getElementById('connect4-game-invite-popup').dataset.inviterShort = inviterShort;
 }
 
+/**
+ * Hides the invite popup when a user declines or accpts it.
+ */
 function hideInvitePopup() {
     document.getElementById('connect4-game-invite-popup').style.display = 'none';
 }
+
+/**
+ * Accepts the invite and starts game. It also sends a message that the game is created now and hides the popup after that
+ */
 
 function acceptInvite() {
     inviterShort = document.getElementById('connect4-game-invite-popup').dataset.inviterShort;
@@ -451,6 +486,9 @@ function acceptInvite() {
     connect4_send_board(gameId, -1);
 }
 
+/**
+ * Declines the invitation and sends the inviter a message that the invitee declined the invite
+ */
 function declineInvite() {
     inviterShort = document.getElementById('connect4-game-invite-popup').dataset.inviterShort;
     hideInvitePopup();
@@ -458,10 +496,17 @@ function declineInvite() {
     backend(`connect_four_decline_invite ${inviterShort} ${myShortId}`)
 }
 
+/**
+ * Hides the decline information popup when user clicks on the button
+ */
 function hideDeclinePopup() {
     document.getElementById("connect4-game-decline-invite-popup").style.display = 'none';
 }
 
+/**
+ * Declines the invitation and sents the inviter an information message about the decline
+ * @param e buttonclick event
+ */
 function connect4_invite_declined(e) {
     const inviterShort = e.public[1];
     const invitedShort = e.public[2];
