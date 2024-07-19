@@ -1,6 +1,10 @@
+//Game board size
 const CONNECT4_GAME_COLUMNS = 7;
 const CONNECT4_GAME_ROWS = 6;
-
+/**
+  * Sets up the player selection menu for starting a new game.
+  *
+  */
 function connect4_menu_game_players() {
     connect4_fill_players();
     prev_scenario = 'connect4-game';
@@ -14,7 +18,10 @@ function connect4_menu_game_players() {
     document.getElementById('plus').style.display = 'none';
     closeOverlay();
 }
-
+/**
+  * Populates the player section menu with a list of available contacts.
+  *
+  */
 function connect4_fill_players() {
     var choices = '';
     for (var m in tremola.contacts) {
@@ -27,7 +34,10 @@ function connect4_fill_players() {
     document.getElementById('lst:connect4-players').innerHTML = choices
     document.getElementById(myId).disabled = true;
 }
-
+/**
+  * Sends invitation to the selected user to start a new game.
+  *
+  */
 function connect4_send_invite() {
     var opponent = {}
         for (var m in tremola.contacts) {
@@ -37,7 +47,7 @@ function connect4_send_invite() {
         }
     opponentShort = opponent.substring(0,7);
     document.getElementById("div:connect4-confirm-player").style.display = 'none';
-    setScenario('connect4-game');
+    setScenario('connect4-game'); // UI change
     persist();
     backend(`connect_four_invite ${myShortId} ${opponentShort}`);
 }
@@ -84,16 +94,18 @@ function connect4_build_game_item(game) { // [ id, { "alias": "player1 vs player
  * respective owner and gives over to connect4_populate_game().
  */
 function connect4_game_new_event(e) {
+    //fields
     const gameId = e.public[1];
     const playerToMove = e.public[2];
     const members = e.public[3].split(',');
     const stonePos = parseInt(e.public[4], 10);
 
     let board;
-
+    //Case if user is not a member of the played game
+    //User creates new game, such that user has a list of all parallel games, but is not able to open it.
     if (!(members.includes(myShortId))) {
        if (tremola.game_connect4[gameId] && tremola.game_connect4[gameId].board) {
-               board = tremola.game_connect4[gameId].board; // Use the existing board
+               board = tremola.game_connect4[gameId].board; // Use the existing board, if game already exists in users tremola
        } else {
                board = Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))); // Initialize a new board
        }
@@ -107,7 +119,7 @@ function connect4_game_new_event(e) {
        connect4_load_games_list();
        return;
     }
-
+    //Case if User is in members list.
     let idlePlayer = members.find(member => member != playerToMove);
 
     if (tremola.game_connect4[gameId] && tremola.game_connect4[gameId].board) {
@@ -115,7 +127,10 @@ function connect4_game_new_event(e) {
     } else {
         board = Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))); // Initialize a new board
     }
-
+    // Calculating position of the placed stone.
+    // Board is divided into 42 elements.
+    // top left of the board starts at 0. Bottom right ends with 41.
+    // when dividing position int with 7, we get the row. the rest is the column.
     if(stonePos != -1) {
         const x = stonePos % 7;
         const y = Math.floor(stonePos / 7);
@@ -139,7 +154,7 @@ function connect4_game_new_event(e) {
 
 /**
  * This is received when the game is over, either if someone
- * won or if a player gave up. It updates the up and marks the
+ * won or a player gave up. It updates the up and marks the
  * game as over in the store.
  *
  */
@@ -147,17 +162,19 @@ function connect4_game_end_event(e) {
     const gameId = e.public[1];
     const loser = e.public[2];
     const stonePos = e.public[3];
-
+    // Checking if the user ID is in the gameID (Or more concrete: checking if user is a active game member)
+    //This check needs to be done, such that the user doesn't give up all games or doesn't win if a user from another game gives up
     if (gameId.substring(0, 7) != myShortId && gameId.substring(7, 14) != myShortId) {
         tremola.game_connect4[gameId].gameOver = true;
         delete tremola.game_connect4[gameId];
         connect4_load_games_list();
         return;
     }
-
+    // Calculation stone position of the last placed winning stone.
     if(stonePos != -1) {
         const x = stonePos % 7;
         const y = Math.floor(stonePos / 7);
+        // Checking who lost.
         if (loser == myShortId) {
             if(gameId.substring(0,7) == myShortId) {
                 tremola.game_connect4[gameId].board[x][y].owner = gameId.substring(7, 14);
@@ -240,23 +257,26 @@ function connect4_populate_game(gameId) {
  */
 function connect4_add_stone(gameId, column) {
     const { board, currentPlayer, members, gameOver } = tremola.game_connect4[gameId];
-
+    // Checking if user is in received game. if not, then user ignores game update message.
     if (!(members.includes(myShortId))) {
             return;
     }
-
+    // Checking if it is users turn. else user can't place a stone, since it is not the users turn.
     if (currentPlayer != myShortId || gameOver) {
         return;
     }
-
+    // Placing the stone. FreeSlots is the number of free spaces in the collumn. So as long as there are free spaces,
+    // the user can place a stone. Then the FreeSlots gets decremented, such that the stone is in the lowest possible position.
     const freeSlots = board[column].filter(t => t.owner == null).length;
     if (freeSlots > 0) {
         const boardElement = board[column][freeSlots - 1];
+        // Calculating stone position as an integer between 0-41.
         const stonePos = ((freeSlots - 1) * 7) + column
         boardElement.owner = myShortId;
         boardElement.tile.style.backgroundColor = "yellow";
 
         const gameover = connect4_check_gameover(gameId);
+        // Checking if game is over.
         if (gameover) {
             const loser = members.find(member => member != myShortId);
             tremola.game_connect4[gameId].gameOver = true;
