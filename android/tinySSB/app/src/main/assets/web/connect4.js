@@ -60,6 +60,15 @@ function connect4_load_games_list() {
 function connect4_build_game_item(game) { // [ id, { "alias": "player1 vs player2", "moves": {}, members: [] } ] }
     var row, item = document.createElement('div'), bg;
     item.setAttribute('style', 'padding: 0px 5px 10px 5px;'); // old JS (SDK 23)
+    if (!game[1].members.includes(myShortId)) {
+        row = "<button class='chat_item_button light' style='overflow: hidden; width: calc(100% - 4em);'>";
+        row += "<div style='white-space: nowrap;'><div style='text-overflow: ellipsis; overflow: hidden;'>" + escapeHTML(game[1].alias) + "</div>";
+        row += "<div style='text-overflow: clip; overflow: ellipsis;'><font size=-2>" + game[0] + "</font></div></div></button>";
+
+        item.innerHTML = row;
+        document.getElementById('lst:connect4-games').appendChild(item);
+        return;
+    }
 
     row = "<button class='chat_item_button light' style='overflow: hidden; width: calc(100% - 4em);' onclick='connect4_open_game_session(\"" + game[0] + "\");'>";
     row += "<div style='white-space: nowrap;'><div style='text-overflow: ellipsis; overflow: hidden;'>" + escapeHTML(game[1].alias) + "</div>";
@@ -80,9 +89,27 @@ function connect4_game_new_event(e) {
     const members = e.public[3].split(',');
     const stonePos = parseInt(e.public[4], 10);
 
+    let board;
+
+    if (!(members.includes(myShortId))) {
+       if (tremola.game_connect4[gameId] && tremola.game_connect4[gameId].board) {
+               board = tremola.game_connect4[gameId].board; // Use the existing board
+       } else {
+               board = Array.from(new Array(7), () => Array.from(new Array(6), () => ({}))); // Initialize a new board
+       }
+       tremola.game_connect4[gameId] = {
+               board: board,
+               members: members,
+               currentPlayer: playerToMove,
+               alias: fid2display(shortToFidMap[members[0]]) + " vs " + fid2display(shortToFidMap[members[1]]),
+               gameOver: false
+           };
+       connect4_load_games_list();
+       return;
+    }
+
     let idlePlayer = members.find(member => member != playerToMove);
 
-    let board;
     if (tremola.game_connect4[gameId] && tremola.game_connect4[gameId].board) {
         board = tremola.game_connect4[gameId].board; // Use the existing board
     } else {
@@ -120,6 +147,13 @@ function connect4_game_end_event(e) {
     const gameId = e.public[1];
     const loser = e.public[2];
     const stonePos = e.public[3];
+
+    if (gameId.substring(0, 7) != myShortId && gameId.substring(7, 14) != myShortId) {
+        tremola.game_connect4[gameId].gameOver = true;
+        delete tremola.game_connect4[gameId];
+        connect4_load_games_list();
+        return;
+    }
 
     if(stonePos != -1) {
         const x = stonePos % 7;
@@ -206,6 +240,10 @@ function connect4_populate_game(gameId) {
  */
 function connect4_add_stone(gameId, column) {
     const { board, currentPlayer, members, gameOver } = tremola.game_connect4[gameId];
+
+    if (!(members.includes(myShortId))) {
+            return;
+    }
 
     if (currentPlayer != myShortId || gameOver) {
         return;
